@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import Filter from './Filter'
 import PersonForm from './PersonForm'
 import Persons from './Persons'
+import PhonebookService from './PhonebookService'
 
 const App = () => {
 
@@ -13,22 +13,38 @@ const App = () => {
   const [shownContacts, setNewShownContacts] = useState([])
 
   useEffect(() => {
-    axios.get("http://localhost:3001/persons")
-      .then(response => {
-        setPersons(response.data)
-        setNewShownContacts(response.data)
+    PhonebookService.getAll()
+      .then(result => {
+        setPersons(result)
+        setNewShownContacts(result)
       })
   }, [])
 
   const addContact = (event)  => {
     event.preventDefault()
     if(!persons.filter(person => person.name === newName).length > 0){
-      setPersons(persons.concat({name: newName, number: newNumber}))
-      setNewShownContacts(shownContacts.concat({name: newName, number: newNumber}))
+      PhonebookService.create({name: newName, number: newNumber})
+        .then(result => {
+            setPersons(persons.concat(result))
+            setNewShownContacts(shownContacts.concat(result))
+          })
       setNewName('')
       setNewNumber('')
     } else {
-      alert(`${newName} is already added to phonebook`)
+      updateNumber()
+    }
+  }
+
+  const updateNumber = () => {
+    const foundPerson = persons.find(person => person.name === newName)
+    if(window.confirm(`${foundPerson.name} is already added to phonebook, replace the old number with a new one?`)){
+      PhonebookService.updateNumber(foundPerson.id, {name: newName, number: newNumber})
+        .then(response => {
+          setPersons(persons.map(person => person.id !== foundPerson.id ? person : response))
+          setNewShownContacts(persons.map(person => person.id !== foundPerson.id ? person : response))
+          setNewName('')
+          setNewNumber('')
+        })
     }
   }
 
@@ -49,6 +65,15 @@ const App = () => {
     }
   }
 
+  const handleDelete = (contactId) => {
+    const person = persons.find(person => person.id === contactId)
+    if(window.confirm(`Do you want to delete ${person.name}?`)){
+      PhonebookService.deleteContact(contactId)
+      setPersons(persons.filter(person => person.id !== contactId))
+      setNewShownContacts(shownContacts.filter(person => person.id !== contactId))
+    }
+  }
+
   return (
     <div>
       <h2>Phonebook</h2>
@@ -62,7 +87,7 @@ const App = () => {
         formSubmit={addContact}
       />
       <h2>Numbers</h2>
-      <Persons contacts={shownContacts}/>
+      <Persons contacts={shownContacts} deleteContact={handleDelete} />
     </div>
   )
 }
