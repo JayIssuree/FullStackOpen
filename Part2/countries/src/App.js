@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import Country from './Country'
 
 const App = () => {
 
@@ -13,7 +14,6 @@ const App = () => {
         setCountries(response.data)
       })
   }, [])
-
   
   const handleSearch = (event) => {
     const search = event.target.value
@@ -21,29 +21,19 @@ const App = () => {
     setDisplayedCountries(countries.filter(country => country.name.common.includes(search)))
   }
 
+  const handleShowCountry = (country) => {
+    setDisplayedCountries([country])
+  }
+
   const displayCountries = () => {
-    const countries = displayedCountries.map((country, index) => <p key={index + 1}> {country.name.common} </p>)
+    const countries = displayedCountries.map((country, index) => <p key={index + 1}> {country.name.common} <button onClick={() => handleShowCountry(country)}> show </button></p>)
     if(countries.length > 10){
         return(<p> Too many matches, specify another filter </p>)
     } else if(countries.length === 1){
-        return displayCountryInformation()
+        return <Country countryInformation={displayedCountries[0]} />
     } else {
         return(countries)
     }
-  }
-
-  const displayCountryInformation = () => {
-    const country = displayedCountries[0];
-    return(
-      <div>
-        <h1> {country.name.common} </h1>
-        <p> Capital: {country.capital[0]} </p>
-        <p> Area: {country.area} </p>
-        <b> Languages: </b>
-        {Object.keys(country.languages).map((key, index) => <li key={index + 1}> {country.languages[key]} </li>)}
-        <img src={country.flags.png} alt="Countries flag" />
-      </div>
-    )
   }
 
   return(
