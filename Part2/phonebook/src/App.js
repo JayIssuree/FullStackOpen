@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Filter from './Filter'
 import PersonForm from './PersonForm'
 import Persons from './Persons'
+import Message from './Message'
 import PhonebookService from './PhonebookService'
 
 const App = () => {
@@ -11,6 +12,7 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('')
   const [newSearchValue, setNewSearchValue] = useState('')
   const [shownContacts, setNewShownContacts] = useState([])
+  const [message, setMessage] = useState({})
 
   useEffect(() => {
     PhonebookService.getAll()
@@ -27,7 +29,14 @@ const App = () => {
         .then(result => {
             setPersons(persons.concat(result))
             setNewShownContacts(shownContacts.concat(result))
+            return result.name
           })
+        .then(name => {
+          setMessage({text: `${name} successfully added to phonebook`, colour: "green"})
+          setTimeout(() => {
+            setMessage({})
+          }, 5000)
+        })
       setNewName('')
       setNewNumber('')
     } else {
@@ -44,6 +53,19 @@ const App = () => {
           setNewShownContacts(persons.map(person => person.id !== foundPerson.id ? person : response))
           setNewName('')
           setNewNumber('')
+          return response.name
+        })
+        .then(name => {
+          setMessage({text: `Successfully updated the contact details of: ${name}`, colour: "green"})
+          setTimeout(() => {
+            setMessage({})
+          }, 5000)
+        })
+        .catch((error) => {
+          setMessage({text: `Information of: ${newName} has already been removed from the server`, colour: "red"})
+          setTimeout(() => {
+            setMessage({})
+          }, 5000)
         })
     }
   }
@@ -76,6 +98,7 @@ const App = () => {
 
   return (
     <div>
+      <Message message={message.text} colour={message.colour} />
       <h2>Phonebook</h2>
       <Filter value={newSearchValue} onChange={handleSearchChange} />
       <h3> Add a new </h3>
