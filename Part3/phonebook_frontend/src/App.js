@@ -27,13 +27,18 @@ const App = () => {
     if(!persons.filter(person => person.name === newName).length > 0){
       PhonebookService.create({name: newName, number: newNumber})
         .then(result => {
-          console.log(result)
             setPersons(persons.concat(result))
             setNewShownContacts(shownContacts.concat(result))
             return result.name
           })
         .then(name => {
           setMessage({text: `${name} successfully added to phonebook`, colour: "green"})
+          setTimeout(() => {
+            setMessage({})
+          }, 5000)
+        })
+        .catch(error => {
+          setMessage({text: `${error.response.data.error}`, colour: "red"})
           setTimeout(() => {
             setMessage({})
           }, 5000)
@@ -63,7 +68,7 @@ const App = () => {
           }, 5000)
         })
         .catch((error) => {
-          setMessage({text: `Information of: ${newName} has already been removed from the server`, colour: "red"})
+          setMessage({text: `${error.response.data.error}`, colour: "red"})
           setTimeout(() => {
             setMessage({})
           }, 5000)
