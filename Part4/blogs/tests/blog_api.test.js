@@ -3,11 +3,41 @@ const supertest = require('supertest')
 const app = require('../app')
 const api = supertest(app)
 const Blog = require('../models/blogs')
+const User = require('../models/users')
 const blogAPIHelper = require('../utils/blog_api_helper')
 
 beforeEach(async() => {
     await Blog.deleteMany({})
-    const blogObjects = blogAPIHelper.initialBlogs.map(blog => new Blog(blog))
+    await User.deleteMany({})
+    const mikey = await new User({
+        username: "Mikey",
+        name: "Michael Chan",
+        password: "Password"
+    }).save()
+    const dijjy = await new User({
+        username: "Dijjy",
+        name: "Edsger W. Dijkstra",
+        password: "Password"
+    }).save()
+    const rob = await new User({
+        username: "Rob",
+        name: "Robert C. Martin",
+        password: "Password"
+    }).save()
+    const blogObjects = blogAPIHelper.initialBlogs.map(blog => {
+        switch(blog.author){
+            case "Michael Chan":
+                blog.user = mikey._id
+                break
+            case "Edsger W. Dijkstra":
+                blog.user = dijjy._id
+                break
+            case "Robert C. Martin":
+                blog.user = rob._id
+                break
+        }
+        return new Blog(blog)
+    })
     const promiseArray = blogObjects.map(blog => blog.save())
     await Promise.all(promiseArray)
 })
@@ -40,9 +70,9 @@ describe('creating blogs', () => {
     test('posts a blog to the database', async() => {
         const newBlog = {
             title: "Example Title",
-            author: "Example Author",
+            author: "Robert C. Martin",
             url: "Example URL",
-            likes: 69
+            likes: 69,
         }
         const returnedBlogResponse = await api
             .post('/api/blogs')
@@ -52,14 +82,14 @@ describe('creating blogs', () => {
     
         const returnedBlog = returnedBlogResponse._body
         const returnedBlogs = await api.get('/api/blogs')
-        expect(returnedBlogs._body).toEqual(expect.arrayContaining([returnedBlog]))
+        expect(returnedBlogs._body.find(blog => blog.id === returnedBlog.id))
     
     })
     
     test('if a likes property is missing from the post request, it defaults to 0', async() => {
         const newBlog = {
             title: "Example Title",
-            author: "Example Author",
+            author: "Robert C. Martin",
             url: "Example URL",
         }
         const returnedBlogResponse = await api.post('/api/blogs').send(newBlog)
@@ -69,7 +99,7 @@ describe('creating blogs', () => {
     
     test('returns status 400 Bad Request if the title is missing from the request', async() => {
         const newBlog = {
-            author: "Example Author",
+            author: "Robert C. Martin",
             url: "Example URL",
             likes: 69
         }
@@ -82,7 +112,7 @@ describe('creating blogs', () => {
     test('returns status 400 Bad Request if the url is missing from the request', async() => {
         const newBlog = {
             title: "Example Title",
-            author: "Example Author",
+            author: "Robert C. Martin",
             likes: 69
         }
         await api

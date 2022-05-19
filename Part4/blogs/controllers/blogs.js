@@ -1,18 +1,28 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blogs')
+const User = require('../models/users')
 
 blogsRouter.get('/', async(request, response) => {
-    const blogs = await Blog.find({})
+    const blogs = await Blog.find({}).populate('user', {username: 1, name: 1})
     response.json(blogs)
 })
 
 blogsRouter.post('/', async(request, response) => {
+    let user = await User.find({ name: request.body.author })
+    if(user.length === 0){
+        return response.status(400).json({error: "Cannot find author from given name"})
+    }
+    user = user[0]
+    request.body.user = user._id
     const blog = new Blog(request.body)
+    user.blogs = user.blogs.concat(blog._id)
+    await user.save()
+
     try {
         const savedBlogResponse = await blog.save()
-        response.status(201).json(savedBlogResponse)
+        return response.status(201).json(savedBlogResponse)
     } catch (error) {
-        response.sendStatus(400)
+        return response.sendStatus(400)
     }
 })
 
