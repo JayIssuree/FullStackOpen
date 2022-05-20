@@ -76,7 +76,6 @@ describe('blogs', () => {
             .get('/api/users')
         expect(response._body[0].blogs[0].title).toEqual(newBlog.title)
         expect(response._body[0].blogs[0].id).toEqual(newBlog.id)
-        // expect(response._body.error).toEqual("Password too short")
     })
 
 })
