@@ -78,6 +78,18 @@ const handleBlogSubmit = async(event) => {
   setUrl("")
 }
 
+const handleLike = (blog) => {
+  blog.likes++
+  blog.user = null
+  blogService.update(blog.id, blog)
+  setBlogs(blogs.map(mBlog => mBlog.id === blog.id ? blog : mBlog))
+}
+
+const handleDelete = (blogid) => {
+  blogService.remove(blogid)
+  setBlogs(blogs.filter(blog => blog.id !== blogid))
+}
+
 const displayBlogs = () => {
   if(user !== null){
     return(
@@ -85,7 +97,11 @@ const displayBlogs = () => {
         <h2>blogs</h2>
         <p> {user.name} logged in <button onClick={handleLogout}>logout</button>  </p>
           {blogs.map(blog =>
-            <Blog key={blog.id} blog={blog} />
+            <Blog 
+              key={blog.id} blog={blog} 
+              handleLike={(blog) => handleLike(blog)}
+              handleDelete={(blogid) => handleDelete(blogid)}
+            />
           )}
         <BlogForm 
           title={title}
