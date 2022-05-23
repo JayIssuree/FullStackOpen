@@ -13,6 +13,11 @@ app.use('/api/login', loginRouter)
 app.use('/api/blogs', blogsRouter)
 app.use('/api/users', usersRouter)
 
+if (process.env.NODE_ENV === 'test') {
+    const testingRouter = require('./utils/db_reset')
+    app.use('/api/testing', testingRouter)
+}
+
 mongoose.connect(config.MONGODB_URI)
     .then(result => {
         console.log('connecting to', config.MONGODB_URI)
